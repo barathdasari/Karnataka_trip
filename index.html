@@ -643,6 +643,8 @@
     .right { animation-delay: 0.2s; }
     footer { animation-delay: 0.3s; }
 
+    .m-switch, .m-bottom { display: none; }
+
     /* Narrower laptops: stack the map (legend and details below the stage) */
     @media (max-width: 1820px) {
       main { grid-template-columns: 340px minmax(0, 1fr) 420px; }
@@ -777,6 +779,54 @@
       footer { order: 8; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px; font-size: 13px; }
       .footer-left, .footer-right { flex-wrap: wrap; gap: 6px 10px; }
       .footer-right { font-size: 12px; }
+    }
+
+    /* PHONE DAY SWITCHER (under 900px) */
+    @media (max-width: 899px) {
+      .days { display: none; }
+      .m-switch {
+        display: block; order: 1; position: sticky; top: 0; z-index: 30; flex: none;
+        margin: -16px -16px 0; padding: 8px 12px 6px; background: var(--paper);
+        border-bottom: 1px solid var(--line); box-shadow: 0 8px 14px -12px rgba(40, 35, 20, 0.45);
+      }
+      .m-bar { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 8px; align-items: stretch; }
+      .m-nav {
+        min-height: 44px; display: flex; align-items: center; justify-content: center;
+        border-radius: 12px; background: #ffffff; border: 1px solid var(--line);
+        font-size: 20px; font-weight: 700; color: var(--ink);
+      }
+      .m-nav:disabled { opacity: 0.4; cursor: default; }
+      .m-label {
+        min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        text-align: center; padding: 2px 8px; border-radius: 12px;
+        background: var(--accent-tint); border-bottom: 3px solid var(--accent);
+      }
+      body.full .m-label { background: #ffffff; border-bottom-color: var(--ink); }
+      .m-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.4px; color: var(--accent-t); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+      body.full .m-kicker { color: var(--ink); }
+      .m-name {
+        max-width: 100%; font-family: var(--display); font-size: 14px; font-weight: 700; line-height: 1.2;
+        color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      }
+      .m-seg { display: flex; gap: 6px; margin-top: 6px; }
+      .m-seg button {
+        position: relative; flex: 1 1 0; min-width: 0; height: 36px; border-radius: 10px;
+        border: 1px solid var(--line); background: #ffffff; font-size: 15px; font-weight: 700; color: var(--ink);
+      }
+      .m-seg button::after { content: ""; position: absolute; inset: -4px -2px; }
+      .m-seg button.on { background: var(--accent-t); border-color: var(--accent-t); color: #ffffff; }
+
+      .m-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 16px; }
+      body.full .m-bottom { display: none; }
+      .m-bottom button {
+        min-height: 52px; padding: 8px 12px; border-radius: 14px; background: #ffffff; border: 1px solid var(--line);
+        display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
+        text-align: left; color: var(--ink);
+      }
+      .m-bottom button.next { align-items: flex-end; text-align: right; }
+      .m-bottom button:disabled { opacity: 0.45; cursor: default; }
+      .m-b-k { font-size: 15px; font-weight: 700; }
+      .m-b-n { font-size: 12.5px; line-height: 1.25; color: var(--ink2); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -921,6 +971,24 @@
       <!-- CENTER: MAP + TIMELINE -->
       <section class="center">
 
+        <nav class="m-switch" aria-label="Day navigation">
+          <div class="m-bar">
+            <button type="button" class="m-nav" id="mPrev" aria-label="Previous day" onclick="stepDay(-1)">←</button>
+            <div class="m-label" id="mLabel" aria-live="polite">
+              <span class="m-kicker" id="mKick"></span>
+              <span class="m-name" id="mName"></span>
+            </div>
+            <button type="button" class="m-nav" id="mNext" aria-label="Next day" onclick="stepDay(1)">→</button>
+          </div>
+          <div class="m-seg" role="group" aria-label="Jump to day">
+            <button type="button" data-day="1" aria-label="Day 1" onclick="goDay(1)">1</button>
+            <button type="button" data-day="2" aria-label="Day 2" onclick="goDay(2)">2</button>
+            <button type="button" data-day="3" aria-label="Day 3" onclick="goDay(3)">3</button>
+            <button type="button" data-day="4" aria-label="Day 4" onclick="goDay(4)">4</button>
+            <button type="button" data-day="5" aria-label="Day 5" onclick="goDay(5)">5</button>
+          </div>
+        </nav>
+
         <div class="map-card card">
           <div class="map-bar">
             <span class="map-title">Route map <span>Tap a stop or a day to follow the loop</span></span>
@@ -966,6 +1034,10 @@
             <span class="sun-pill">🕒 <span id="sunTimer"></span></span>
           </div>
           <div class="tl-list" id="timelineContainer"></div>
+          <div class="m-bottom">
+            <button type="button" id="mBPrev" class="prev" aria-label="Previous day" onclick="stepDay(-1)"></button>
+            <button type="button" id="mBNext" class="next" aria-label="Next day" onclick="stepDay(1)"></button>
+          </div>
         </div>
 
       </section>
@@ -1232,7 +1304,7 @@
         card.append(top, el("div", "tl-title", ev.title), el("div", "tl-desc", ev.desc), el("div", "tl-note", ev.note));
         card.addEventListener("click", () => {
           const s = STOPS.find(x => x.ev && x.ev[0] === dayNum && x.ev[1] === i);
-          if (s) selectStop(s.id);
+          if (s) selectStop(s.id, true);
         });
         card.style.cursor = STOPS.some(x => x.ev && x.ev[0] === dayNum && x.ev[1] === i) ? "pointer" : "default";
 
@@ -1271,6 +1343,7 @@
       });
       renderTimeline(dayNum);
       showDay(dayNum);
+      updateSwitch();
       const chip = document.querySelector(`.day-btn[data-day="${dayNum}"]`);
       const strip = document.querySelector(".days");
       if (chip && strip.scrollWidth > strip.clientWidth) {
@@ -1287,6 +1360,7 @@
       $("daySubheading").textContent = "Each leg is coloured by its day: teal coast, green Malnad, saffron heritage return.";
       $("sunTimer").textContent = "Five days, four nights, daylight only";
       showDay("full");
+      updateSwitch();
     }
 
     function showPop(id) {
@@ -1307,12 +1381,13 @@
       });
     }
 
-    function selectStop(id) {
+    function selectStop(id, fromTimeline = false) {
       stopPlay();
       const s = STOPS.find(x => x.id === id);
       selectedStop = id;
       const targetDay = s.ev ? s.ev[0] : s.days[0];
-      if (targetDay !== currentDay && (s.ev || !s.days.includes(currentDay))) switchDay(targetDay);
+      const dayChanged = targetDay !== currentDay && (s.ev || !s.days.includes(currentDay));
+      if (dayChanged) { switchDay(targetDay); if (!fromTimeline) scrollToDayTop(); }
       setPinned(id);
       showPop(id);
       $("infoName").textContent = s.id;
@@ -1332,7 +1407,7 @@
         if (item) item.classList.add("focus");
       }
       document.querySelectorAll(".marker").forEach(m => m.classList.toggle("hot", m.dataset.stop === id));
-      if (window.matchMedia("(max-width: 899px)").matches) {
+      if (!dayChanged && !fromTimeline && window.matchMedia("(max-width: 899px)").matches) {
         $("info").scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
@@ -1369,6 +1444,72 @@
       };
       runDay();
     }
+
+    // PHONE DAY SWITCHER
+    const isPhone = () => window.matchMedia("(max-width: 899px)").matches;
+
+    function scrollToDayTop() {
+      if (!isPhone()) return;
+      const map = document.querySelector(".map-card");
+      const bar = document.querySelector(".m-switch");
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const top = map.getBoundingClientRect().top + window.pageYOffset - bar.offsetHeight - 8;
+      window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+    }
+
+    function goDay(n) {
+      const changed = n !== currentDay;
+      switchDay(n);
+      if (changed) scrollToDayTop();
+    }
+
+    function stepDay(delta) {
+      if (currentDay == null) return goDay(delta > 0 ? 1 : 5);
+      const t = currentDay + delta;
+      if (t >= 1 && t <= 5) goDay(t);
+    }
+
+    function routeOf(d) { return document.querySelector(`.day-btn[data-day="${d}"] .day-route`).textContent.trim(); }
+
+    function updateSwitch() {
+      const n = currentDay, full = n == null;
+      const tag = full ? "Full loop · 5 days" : document.querySelector(`.day-btn[data-day="${n}"] .day-tag`).textContent.replace("•", "·").replace(/\s+/g, " ").trim();
+      $("mKick").textContent = tag;
+      $("mName").textContent = full ? "Anantapur round trip" : routeOf(n);
+
+      const setDisabled = (b, off) => { b.disabled = off; b.setAttribute("aria-disabled", String(off)); };
+      setDisabled($("mPrev"), !full && n === 1);
+      setDisabled($("mNext"), !full && n === 5);
+
+      document.querySelectorAll(".m-seg button").forEach(b => {
+        const on = Number(b.dataset.day) === n;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+
+      const prev = $("mBPrev"), next = $("mBNext");
+      prev.replaceChildren();
+      next.replaceChildren();
+      if (!full) {
+        if (n === 1) { prev.append(el("span", "m-b-k", "Start of trip")); setDisabled(prev, true); }
+        else { prev.append(el("span", "m-b-k", `← Day ${n - 1}`), el("span", "m-b-n", routeOf(n - 1))); setDisabled(prev, false); }
+        if (n === 5) { next.append(el("span", "m-b-k", "End of trip")); setDisabled(next, true); }
+        else { next.append(el("span", "m-b-k", `Day ${n + 1} →`), el("span", "m-b-n", routeOf(n + 1))); setDisabled(next, false); }
+      }
+    }
+
+    // Swipe left/right on the timeline to change day (mostly-vertical gestures are ignored)
+    (function enableSwipe() {
+      const area = $("timelineContainer").parentElement;
+      let sx = 0, sy = 0;
+      area.addEventListener("touchstart", e => { const p = e.changedTouches[0]; sx = p.clientX; sy = p.clientY; }, { passive: true });
+      area.addEventListener("touchend", e => {
+        if (!isPhone()) return;
+        const p = e.changedTouches[0];
+        const dx = p.clientX - sx, dy = p.clientY - sy;
+        if (Math.abs(dx) >= 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepDay(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    })();
 
     switchDay(1);
   </script>
